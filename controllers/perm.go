@@ -1,117 +1,135 @@
 package controllers
 
 import (
+	"github.com/gin-gonic/gin"
 	auth "github.com/ne7ermore/gRBAC"
 	"github.com/ne7ermore/gRBAC/services"
-	. "github.com/yeqown/gweb/logger"
-	"github.com/yeqown/gweb/utils"
-	"sync"
+	"github.com/yeqown/gRBAC-server/logger"
+	"github.com/yeqown/server-common/code"
 )
 
 /*
  * 增加权限
  */
-type NewPermissionForm struct {
-	PermissionDes  string `schema:"permission_desc" valid:"Required"`
-	PermissionName string `schema:"permission_name" valid:"Required"`
+type newPermissionForm struct {
+	Desc string `form:"permission_desc"`
+	Name string `form:"permission_name"`
 }
 
-var PoolNewPermissionForm = &sync.Pool{New: func() interface{} { return &NewPermissionForm{} }}
-
-type NewPermissionResp struct {
-	utils.CodeInfo
+type newPermissionResp struct {
+	code.CodeInfo
 	Permission *services.Permission `json:"Permission"`
 }
 
-var PoolNewPermissionResp = &sync.Pool{New: func() interface{} { return &NewPermissionResp{} }}
+// NewPermission ...
+func NewPermission(c *gin.Context) {
+	var (
+		form = new(newPermissionForm)
+		resp = new(newPermissionResp)
+	)
 
-func NewPermission(req *NewPermissionForm) *NewPermissionResp {
-	res := PoolNewPermissionResp.Get().(*NewPermissionResp)
-	PoolNewPermissionResp.Put(res)
-
-	permission, err := auth.CreatePermisson(req.PermissionName, req.PermissionDes)
-	if err != nil {
-		utils.Response(res, utils.NewCodeInfo(utils.CodeSystemErr, err.Error()))
-		AppL.Error(err.Error())
-		return res
+	if err := c.ShouldBind(form); err != nil {
+		ResponseError(c, err)
+		return
 	}
 
-	utils.Response(res, utils.NewCodeInfo(utils.CodeOk, ""))
-	res.Permission = permission
-	return res
+	permission, err := auth.CreatePermisson(form.Name, form.Desc)
+	if err != nil {
+		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		logger.Logger.Error(err.Error())
+		Response(c, resp)
+		return
+	}
+
+	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	resp.Permission = permission
+	Response(c, resp)
+	return
 }
 
 /*
  * 获取权限
  */
 
-type QueryPermissionForm struct {
-	Limit int `schema:"limit" valid:"Required"`
-	Skip  int `schema:"skip" valid:"Min(0)"`
-	// Field string `schema:"field" valid:"Required"`
+type queryPermissionForm struct {
+	Limit int `form:"limit;default=10"`
+	Skip  int `form:"skip;default=0"`
 }
 
-var PoolQueryPermissionForm = &sync.Pool{New: func() interface{} { return &QueryPermissionForm{} }}
-
-type QueryPermissionResp struct {
-	utils.CodeInfo
+type queryPermissionResp struct {
+	code.CodeInfo
 	Permissions []*services.Permission `json:"permissions"`
 }
 
-var PoolQueryPermissionResp = &sync.Pool{New: func() interface{} { return &QueryPermissionResp{} }}
+// QueryPermission query all permissions
+func QueryPermission(c *gin.Context) {
 
-func QueryPermission(req *QueryPermissionForm) *QueryPermissionResp {
-	res := PoolQueryPermissionResp.Get().(*QueryPermissionResp)
-	PoolQueryPermissionResp.Put(res)
+	var (
+		form = new(queryPermissionForm)
+		resp = new(queryPermissionResp)
+	)
 
-	map_perms, err := auth.GetAllPerms(req.Skip, req.Limit, CreateTimeDesc)
+	if err := c.ShouldBind(form); err != nil {
+		ResponseError(c, err)
+		return
+	}
+
+	mapPerms, err := auth.GetAllPerms(form.Skip, form.Limit, CreateTimeDesc)
 	if err != nil {
-		utils.Response(res, utils.NewCodeInfo(utils.CodeSystemErr, err.Error()))
-		return res
+		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		Response(c, resp)
+		return
 	}
 
-	for _, perm := range map_perms {
-		println(perm)
-		// AppL.Info(k, )
-		// AppL.Info(perm.(*services.Permission))
-	}
+	// for _, perm := range mapPerms {
+	// 	println(perm)
+	// 	// logger.Logger.Info(k, )
+	// 	// logger.Logger.Info(perm.(*services.Permission))
+	// }
 
-	utils.Response(res, utils.NewCodeInfo(utils.CodeOk, ""))
-	res.Permissions = map_perms
-	return res
+	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	resp.Permissions = mapPerms
+	Response(c, resp)
+	return
 }
 
 /*
  * 编辑权限
  */
 
-type EditPermissionForm struct {
-	PermissionID string `schema:"permission_id" valid:"Required"`
-	Desc         string `schema:"desc" valid:"Required;MinSize(1)"`
-	Name         string `schema:"name" valid:"Required;MinSize(1)"`
+type editPermissionForm struct {
+	PermissionID string `form:"permission_id"`
+	Desc         string `form:"desc"`
+	Name         string `form:"name"`
 }
 
-var PoolEditPermissionForm = &sync.Pool{New: func() interface{} { return &EditPermissionForm{} }}
-
-type EditPermissionResp struct {
-	utils.CodeInfo
-	Permission *services.Permission `permission`
+type editPermissionResp struct {
+	code.CodeInfo
+	Permission *services.Permission `json:"permission"`
 }
 
-var PoolEditPermissionResp = &sync.Pool{New: func() interface{} { return &EditPermissionResp{} }}
+// EditPermission ...
+func EditPermission(c *gin.Context) {
+	var (
+		form = new(editPermissionForm)
+		resp = new(editPermissionResp)
+	)
 
-func EditPermission(req *EditPermissionForm) *EditPermissionResp {
-	res := PoolEditPermissionResp.Get().(*EditPermissionResp)
-	PoolEditPermissionResp.Put(res)
-
-	permission, err := auth.UpdatePerm(req.PermissionID, req.Desc, req.Name)
-	if err != nil {
-		utils.Response(res, utils.NewCodeInfo(utils.CodeSystemErr, err.Error()))
-		AppL.Error(err.Error())
-		return res
+	if err := c.ShouldBind(form); err != nil {
+		ResponseError(c, err)
+		return
 	}
 
-	utils.Response(res, utils.NewCodeInfo(utils.CodeOk, ""))
-	res.Permission = permission
-	return res
+	permission, err := auth.UpdatePerm(form.PermissionID, form.Desc, form.Name)
+	if err != nil {
+		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		logger.Logger.Error(err.Error())
+		Response(c, resp)
+		return
+	}
+
+	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	resp.Permission = permission
+	Response(c, resp)
+	return
 }

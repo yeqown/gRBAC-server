@@ -1,63 +1,74 @@
 package controllers
 
 import (
+	"fmt"
+
+	"github.com/gin-gonic/gin"
 	auth "github.com/ne7ermore/gRBAC"
-	. "github.com/yeqown/gweb/logger"
-	"github.com/yeqown/gweb/utils"
-	"sync"
+
+	"github.com/yeqown/gRBAC-server/logger"
+	"github.com/yeqown/server-common/code"
 )
 
 /*
  * 鉴权
  */
-type IsPermittedForm struct {
-	Mobile  string `schema:"mobile" valid:"Required;Length(11)"`
-	ResName string `schema:"res_name" valid:"Required;MinSize(1)"`
-	Action  string `schema:"action" valid:"Required;MinSize(1)"`
+type isPermittedForm struct {
+	UID     string `form:"uid"`
+	ResName string `form:"res_name"`
+	Action  string `form:"action"`
 }
 
-var PoolIsPermittedForm = &sync.Pool{New: func() interface{} { return &IsPermittedForm{} }}
-
-type IsPermittedResp struct {
-	utils.CodeInfo
+type isPermittedResp struct {
+	code.CodeInfo
 	Permitted bool `json:"permitted"`
 }
 
-var PoolIsPermittedResp = &sync.Pool{New: func() interface{} { return &IsPermittedResp{} }}
+// Auth handler
+func Auth(c *gin.Context) {
+	var (
+		form = new(isPermittedForm)
+		resp = new(isPermittedResp)
+	)
 
-func Auth(req *IsPermittedForm) *IsPermittedResp {
-	res := PoolIsPermittedResp.Get().(*IsPermittedResp)
-	defer PoolNewPermissionResp.Put(res)
-	res.Permitted = false
+	resp.Permitted = false
+	if err := c.ShouldBind(form); err != nil {
+		ResponseError(c, err)
+		return
+	}
 
 	// get user by UserID
-	u, err := auth.GetUserByUid(req.Mobile)
+	u, err := auth.GetUserByUid(form.UID)
 	if err != nil {
-		utils.Response(res, utils.NewCodeInfo(utils.CodeSystemErr, err.Error()))
-		AppL.Errorf("get user with err: %s\n", err.Error())
-		return res
+		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		logger.Logger.Errorf("get user with err: %s\n", err.Error())
+		Response(c, resp)
+		return
 	}
-	AppL.Infof("get user with mongoid: %s\n", u.Id.Hex())
+	logger.Logger.Infof("get user with mongoid: %s\n", u.Id.Hex())
 
 	// get perm by "res:action:*"
 	p, err := auth.GetPermByDesc(
-		utils.Fstring("%s:%s:%s", req.ResName, req.Action, "*"),
+		fmt.Sprintf("%s:%s:%s", form.ResName, form.Action, "*"),
 	)
 	if err != nil {
-		utils.Response(res, utils.NewCodeInfo(utils.CodeSystemErr, err.Error()))
-		AppL.Errorf("get perm with err: %s\n", err.Error())
-		return res
+		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		logger.Logger.Errorf("get perm with err: %s\n", err.Error())
+		Response(c, resp)
+		return
 	}
-	AppL.Infof("get permission with mongoid: %s\n", p.Id.Hex())
+	logger.Logger.Infof("get permission with mongoid: %s\n", p.Id.Hex())
 
 	permitted, err := auth.IsPrmitted(u.Id.Hex(), p.Id.Hex())
 	if err != nil {
-		utils.Response(res, utils.NewCodeInfo(utils.CodeSystemErr, err.Error()))
-		AppL.Errorf(err.Error())
-		return res
+		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		logger.Logger.Errorf(err.Error())
+		Response(c, resp)
+		return
 	}
 
-	utils.Response(res, utils.NewCodeInfo(utils.CodeOk, ""))
-	res.Permitted = permitted
-	return res
+	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	resp.Permitted = permitted
+	Response(c, resp)
+	return
 }

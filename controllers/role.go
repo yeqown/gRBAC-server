@@ -2,144 +2,169 @@ package controllers
 
 import (
 	"fmt"
+
+	"github.com/gin-gonic/gin"
+
 	auth "github.com/ne7ermore/gRBAC"
 	"github.com/ne7ermore/gRBAC/services"
-	. "github.com/yeqown/gweb/logger"
-	"github.com/yeqown/gweb/utils"
-	"sync"
+	"github.com/yeqown/gRBAC-server/logger"
+	"github.com/yeqown/server-common/code"
 )
 
 /*
  * 新建角色
  */
-type NewRoleForm struct {
-	RoleName string `schema:"role_name" valid:"Required"`
+type newRoleForm struct {
+	RoleName string `form:"role_name" binding:"required"`
 }
 
-var PoolNewRoleForm = &sync.Pool{New: func() interface{} { return &NewRoleForm{} }}
-
-type NewRoleResp struct {
-	utils.CodeInfo
+type newRoleResp struct {
+	code.CodeInfo
 	Role *services.Role `json:"role"`
 }
 
-var PoolNewRoleResp = &sync.Pool{New: func() interface{} { return &NewRoleResp{} }}
+// NewRole ...
+func NewRole(c *gin.Context) {
+	var (
+		form = new(newRoleForm)
+		resp = new(newRoleResp)
+	)
 
-func NewRole(req *NewRoleForm) *NewRoleResp {
-	res := PoolNewRoleResp.Get().(*NewRoleResp)
-	defer PoolNewRoleResp.Put(res)
-
-	role, err := auth.CreateRole(req.RoleName)
-	if err != nil {
-		utils.Response(res, utils.NewCodeInfo(utils.CodeSystemErr, err.Error()))
-		AppL.Error(err.Error())
-		return res
+	if err := c.ShouldBind(form); err != nil {
+		ResponseError(c, err)
+		return
 	}
 
-	utils.Response(res, utils.NewCodeInfo(utils.CodeOk, ""))
-	res.Role = role
-	return res
+	role, err := auth.CreateRole(form.RoleName)
+	if err != nil {
+		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		logger.Logger.Error(err.Error())
+		Response(c, resp)
+		return
+	}
+
+	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	resp.Role = role
+	Response(c, resp)
+	return
 }
 
 /*
  * 查询所有角色
  */
-type QueryAllRolesForm struct {
-	Limit int `schema:"limit" valid:"Required;Min(1)"`
-	Skip  int `shcema:"skip" valid:"Min(0)"`
-	// Field string `shcema:"field" valid:"Required"`
+type queryAllRolesForm struct {
+	Limit int `form:"limit"`
+	Skip  int `form:"skip"`
 }
 
-var PoolQueryAllRolesForm = &sync.Pool{New: func() interface{} { return &QueryAllRolesForm{} }}
-
-type QueryAllRolesResp struct {
-	utils.CodeInfo
+type queryAllRolesResp struct {
+	code.CodeInfo
 	Roles []*services.Role `json:"roles"`
 }
 
-var PoolQueryAllRolesResp = &sync.Pool{New: func() interface{} { return &QueryAllRolesResp{} }}
+// QueryRole ...
+func QueryRole(c *gin.Context) {
+	var (
+		form = new(queryAllRolesForm)
+		resp = new(queryAllRolesResp)
+	)
 
-func QueryRole(req *QueryAllRolesForm) *QueryAllRolesResp {
-	res := PoolQueryAllRolesResp.Get().(*QueryAllRolesResp)
-	defer PoolQueryAllRolesResp.Put(res)
-	res.Roles = nil
+	if err := c.ShouldBind(form); err != nil {
+		ResponseError(c, err)
+		return
+	}
 
-	roles, err := auth.GetAllRoles(req.Skip, req.Limit, CreateTimeDesc)
+	resp.Roles = nil
+
+	roles, err := auth.GetAllRoles(form.Skip, form.Limit, CreateTimeDesc)
 	if err != nil {
-		utils.Response(res, utils.NewCodeInfo(utils.CodeSystemErr, err.Error()))
-		return res
+		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		Response(c, resp)
+		return
 	}
 	fmt.Println(roles)
 
-	utils.Response(res, utils.NewCodeInfo(utils.CodeOk, ""))
-	res.Roles = roles
-	return res
+	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	resp.Roles = roles
+	Response(c, resp)
+	return
 }
 
 /*
  * 为角色增加权限
  */
-type AssignPerToRoleForm struct {
-	RoleID       string `schema:"role_id" valid:"Required"`
-	PermissionID string `schema:"permission_id" valid:"Required"`
+type assignPerToRoleForm struct {
+	RoleID       string `form:"role_id" binding:"required"`
+	PermissionID string `form:"permission_id" binding:"required"`
 }
 
-var PoolAssignPerToRoleForm = &sync.Pool{New: func() interface{} { return &AssignPerToRoleForm{} }}
-
-type AssignPerToRoleResp struct {
-	utils.CodeInfo
+type assignPerToRoleResp struct {
+	code.CodeInfo
 	Role *services.Role `json:"role"`
 }
 
-var PoolAssignPerToRoleResp = &sync.Pool{New: func() interface{} { return &AssignPerToRoleResp{} }}
+// AssignRolePermission ....
+func AssignRolePermission(c *gin.Context) {
+	var (
+		form = new(assignPerToRoleForm)
+		resp = new(assignPerToRoleResp)
+	)
 
-func AssignRolePermission(req *AssignPerToRoleForm) *AssignPerToRoleResp {
-	res := PoolAssignPerToRoleResp.Get().(*AssignPerToRoleResp)
-	defer PoolAssignPerToRoleResp.Put(res)
-
-	role, err := auth.Assign(req.RoleID, req.PermissionID)
-
-	if err != nil {
-		utils.Response(res, utils.NewCodeInfo(utils.CodeSystemErr, err.Error()))
-		AppL.Error(err.Error())
-		return res
+	if err := c.ShouldBind(form); err != nil {
+		ResponseError(c, err)
+		return
 	}
 
-	utils.Response(res, utils.NewCodeInfo(utils.CodeOk, ""))
-	res.Role = role
-	return res
+	role, err := auth.Assign(form.RoleID, form.PermissionID)
+
+	if err != nil {
+		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		logger.Logger.Error(err.Error())
+		Response(c, resp)
+		return
+	}
+
+	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	resp.Role = role
+	Response(c, resp)
+	return
 }
 
 /*
  * 为角色删除权限
  */
-type DelPerToRoleForm struct {
-	RoleID       string `schema:"role_id" valid:"Required"`
-	PermissionID string `schema:"permission_id" valid:"Required"`
+type delPerToRoleForm struct {
+	RoleID       string `form:"role_id" binding:"required"`
+	PermissionID string `form:"permission_id" binding:"required"`
 }
 
-var PoolDelPerToRoleForm = &sync.Pool{New: func() interface{} { return &DelPerToRoleForm{} }}
-
-type DelPerToRoleResp struct {
-	utils.CodeInfo
+type delPerToRoleResp struct {
+	code.CodeInfo
 	Role *services.Role `json:"role"`
 }
 
-var PoolDelPerToRoleResp = &sync.Pool{New: func() interface{} { return &DelPerToRoleResp{} }}
+// DelRolePermission ...
+func DelRolePermission(c *gin.Context) {
+	var (
+		form = new(delPerToRoleForm)
+		resp = new(delPerToRoleResp)
+	)
 
-func DelRolePermission(req *DelPerToRoleForm) *DelPerToRoleResp {
-	res := PoolDelPerToRoleResp.Get().(*DelPerToRoleResp)
-	defer PoolDelPerToRoleResp.Put(res)
-
-	role, err := auth.Revoke(req.RoleID, req.PermissionID)
-	if err != nil {
-		utils.Response(res, utils.NewCodeInfo(utils.CodeSystemErr, err.Error()))
-		AppL.Error(err.Error())
-		return res
+	if err := c.ShouldBind(form); err != nil {
+		ResponseError(c, err)
+		return
 	}
 
-	utils.Response(res, utils.NewCodeInfo(utils.CodeOk, ""))
-	res.Role = role
-	return res
+	role, err := auth.Revoke(form.RoleID, form.PermissionID)
+	if err != nil {
+		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		logger.Logger.Error(err.Error())
+		Response(c, resp)
+		return
+	}
 
+	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	resp.Role = role
+	Response(c, resp)
+	return
 }

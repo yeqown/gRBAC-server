@@ -27,6 +27,7 @@ _testmain.go
 /package/
 vendor/
 !vendor/manifest
+pkg/
 
 sftp-config.json
 
