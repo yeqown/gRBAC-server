@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 
+	"github.com/gin-gonic/gin"
 	"github.com/yeqown/gRBAC-server/logger"
+	"github.com/yeqown/gRBAC-server/services"
 )
 
 var (
@@ -18,8 +20,11 @@ func main() {
 	// init logger
 	logger.InitLogger(*logpath)
 
+	// init secret file and token
+	services.InitSecretFile()
+
 	// release mode
-	// gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
 
 	// start HTTP server
 	StartHTTP(*port)

@@ -9,13 +9,6 @@ PACKAGE_PATH=pkg
 PACKAGE_BIN_PATH=bin
 BIN=grbac-server
 
-# Deploy Params
-DEV_HOST=zy-dev
-DEV_TAR_PATH=/home/worker/project/auth-server
-
-PROD_HOST=zy-pro2
-PROD_TAR_PATH=/home/worker/project/auth-server
-
 default: clean build
 
 test: 

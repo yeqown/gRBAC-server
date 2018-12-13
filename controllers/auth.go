@@ -7,6 +7,7 @@ import (
 	auth "github.com/ne7ermore/gRBAC"
 
 	"github.com/yeqown/gRBAC-server/logger"
+	"github.com/yeqown/gRBAC-server/services"
 	"github.com/yeqown/server-common/code"
 )
 
@@ -14,9 +15,9 @@ import (
  * 鉴权
  */
 type isPermittedForm struct {
-	UID     string `form:"uid"`
-	ResName string `form:"res_name"`
-	Action  string `form:"action"`
+	UID     string `form:"uid" binding:"required"`
+	ResName string `form:"res_name" binding:"required"`
+	Action  string `form:"action" binding:"required"`
 }
 
 type isPermittedResp struct {
@@ -69,6 +70,42 @@ func Auth(c *gin.Context) {
 
 	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
 	resp.Permitted = permitted
+	Response(c, resp)
+	return
+}
+
+type verifyForm struct {
+	Secret string `form:"secret" binding:"required"`
+}
+type verifyResp struct {
+	code.CodeInfo
+	Verified bool   `json:"verified"`
+	Token    string `json:"token,omitempty"`
+}
+
+// Verify ...
+func Verify(c *gin.Context) {
+	var (
+		form = new(verifyForm)
+		resp = new(verifyResp)
+	)
+	// resp.Verified = false
+	if err := c.ShouldBind(form); err != nil {
+		ResponseError(c, err)
+		return
+	}
+
+	logger.Logger.Infof("get %s, want %s", form.Secret, services.GetSecret())
+
+	if form.Secret != services.GetSecret() {
+		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, "wrong token input"))
+		Response(c, resp)
+		return
+	}
+
+	resp.Verified = true
+	resp.Token = services.GetToken()
+	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
 	Response(c, resp)
 	return
 }

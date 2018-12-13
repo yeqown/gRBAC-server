@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/yeqown/gRBAC-server/middleware"
 	"os"
 	"fmt"
 
@@ -17,7 +18,12 @@ func StartHTTP(port int) {
 	// import middleware
 	r.Use(ginic.LogRequest(logger.Logger, false))
 	r.Use(ginic.Recovery(os.Stdout))
+
+	// no need token to request
+	r.POST("/admin/verify", controllers.Verify)
+
 	// Token middleware
+	r.Use(middleware.Token())
 	r.POST("/auth", controllers.Auth)
 
 	permGroup := r.Group("/perm")

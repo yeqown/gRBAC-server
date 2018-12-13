@@ -26,8 +26,10 @@ _testmain.go
 /logs/
 /package/
 vendor/
+testdata/
 !vendor/manifest
 pkg/
+secrets/
 
 sftp-config.json
 
@@ -44,3 +46,4 @@ sftp-config.json
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+

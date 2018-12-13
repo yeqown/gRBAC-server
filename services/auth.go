@@ -8,6 +8,9 @@ import (
 	"github.com/yeqown/server-common/code"
 )
 
+// Auth for rpc calling
+type Auth struct{}
+
 // Args ...
 type Args struct {
 	UID     string `json:"uid"`
@@ -17,7 +20,7 @@ type Args struct {
 }
 
 // IsPermitted check the permitted or not
-func IsPermitted(args *Args, reply *bool) error {
+func (a Auth) IsPermitted(args *Args, reply *bool) error {
 	logger.Logger.Infof("Called with: `%s %s %s %s`",
 		args.UID,
 		args.Ticket,
