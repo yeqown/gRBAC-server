@@ -13,17 +13,17 @@ type Auth struct{}
 
 // Args ...
 type Args struct {
-	UID     string `json:"uid"`
-	Ticket  string `json:"ticket"`
+	UID string `json:"uid"`
+	// Ticket  string `json:"ticket"`
 	ResDesc string `json:"res_desc"`
 	Action  string `json:"action"`
 }
 
 // IsPermitted check the permitted or not
 func (a Auth) IsPermitted(args *Args, reply *bool) error {
-	logger.Logger.Infof("Called with: `%s %s %s %s`",
+	logger.Logger.Infof("Called with: `%s %s %s`",
 		args.UID,
-		args.Ticket,
+		// args.Ticket,
 		args.ResDesc,
 		args.Action,
 	)

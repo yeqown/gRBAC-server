@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/rpc"
@@ -16,16 +17,17 @@ const (
 )
 
 // StartRPC ...
-func StartRPC(port int) {
+func StartRPC(ctx context.Context, port int) {
 	// init server and struct
 	srv := rpc.NewServer()
 	authRPC := &services.Auth{}
 
 	// initial listener
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
 		panic(err)
 	}
+	logger.Logger.Infof("rpc listening on: %v", port)
 	defer listener.Close()
 
 	// register
@@ -33,12 +35,18 @@ func StartRPC(port int) {
 
 	// loop accept and serve conn
 	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			logger.Logger.Errorf("could not accept connection: %v", err)
-			continue
+		select {
+		case <-ctx.Done():
+			logger.Logger.Info("rpc server quit")
+			return
+		default:
+			conn, err := listener.Accept()
+			if err != nil {
+				logger.Logger.Errorf("could not accept connection: %v", err)
+				continue
+			}
+			// handler connection
+			go srv.ServeCodec(jsonrpc.NewServerCodec(conn))
 		}
-		// handler connection
-		go srv.ServeCodec(jsonrpc.NewServerCodec(conn))
 	}
 }
