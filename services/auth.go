@@ -38,7 +38,6 @@ func (a Auth) IsPermitted(args *Args, reply *bool) error {
 	ci, userID := getUserID(args.UID)
 	if ci.Code != code.CodeOk {
 		logger.Logger.Errorf("get user id err: %s\n", ci.Message)
-		// 默认按照未找到处理，当作一般用户来鉴权
 		r, err := auth.GetRoleByName("default")
 		if err != nil {
 			logger.Logger.Errorf("get role id err: %s\n", ci.Message)
@@ -51,11 +50,10 @@ func (a Auth) IsPermitted(args *Args, reply *bool) error {
 		if *reply, err = auth.IsRolePermitted(roleID, permID); err != nil {
 			return err
 		}
+		return nil
 	}
 
 	logger.Logger.Infof("call IsPrmitted with user id: %s, permID: %s", userID, permID)
-
-	// check permission true or false
 	if b, err := auth.IsPrmitted(userID, permID); err != nil {
 		logger.Logger.Error(err.Error())
 		return err

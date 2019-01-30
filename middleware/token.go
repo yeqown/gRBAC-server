@@ -20,7 +20,7 @@ func Token() gin.HandlerFunc {
 		}
 
 		// empty
-		if token != services.GetToken() {
+		if token != services.GetSecret() {
 			c.JSON(http.StatusOK, code.NewCodeInfo(code.CodeSystemErr, "Token invalid"))
 			c.Abort()
 			return

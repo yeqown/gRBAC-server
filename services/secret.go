@@ -20,14 +20,16 @@ var (
 	token       string
 )
 
-func GetToken() string {
-	if token == "" {
-		token = generateToken()
-	}
-	return token
-}
+// GetToken ...
+// func GetToken() string {
+// 	if token == "" {
+// 		if err := Load
+// 		token = generateSecret()
+// 	}
+// 	return token
+// }
 
-func generateToken() string {
+func generateSecret() string {
 	byts := []byte(time.Now().String())
 	m5 := md5.New()
 	m5.Write(byts)
@@ -37,7 +39,7 @@ func generateToken() string {
 // GetSecret ...
 func GetSecret() string {
 	if secretToken == "" {
-		if err := LoadSecretFile(); err != nil {
+		if err := loadSecretFile(); err != nil {
 			panic(err)
 		}
 	}
@@ -62,7 +64,7 @@ func InitSecretFile() {
 	}
 	defer fd.Close()
 
-	hash := generateToken()
+	hash := generateSecret()
 	_, err = fd.Write([]byte(hash))
 	if err != nil {
 		println(err.Error())
@@ -70,8 +72,8 @@ func InitSecretFile() {
 	}
 }
 
-// LoadSecretFile ...
-func LoadSecretFile() error {
+// loadSecretFile ...
+func loadSecretFile() error {
 	filename := path.Join(secretPath, secretFileName)
 	fd, err := os.Open(filename)
 	if err != nil {

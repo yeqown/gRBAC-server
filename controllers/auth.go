@@ -104,7 +104,7 @@ func Verify(c *gin.Context) {
 	}
 
 	resp.Verified = true
-	resp.Token = services.GetToken()
+	resp.Token = services.GetSecret()
 	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
 	Response(c, resp)
 	return
