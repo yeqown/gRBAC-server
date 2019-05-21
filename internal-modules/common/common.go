@@ -1,10 +1,10 @@
-package controllers
+package common
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yeqown/server-common/code"
+	"github.com/yeqown/infrastructure/types/codes"
 )
 
 const (
@@ -21,7 +21,7 @@ const (
 // ResponseError ...
 func ResponseError(c *gin.Context, err error) {
 	c.JSON(http.StatusOK, gin.H{
-		"code": code.CodeSystemErr,
+		"code": codes.CodeSystemErr,
 		"err":  err.Error(),
 	})
 }

@@ -7,8 +7,8 @@ import (
 	"net/rpc"
 	"net/rpc/jsonrpc"
 
-	"github.com/yeqown/gRBAC-server/logger"
-	"github.com/yeqown/gRBAC-server/services"
+	_authuc "github.com/yeqown/gRBAC-server/internal-modules/auth/usecase"
+	"github.com/yeqown/gRBAC-server/pkg/logger"
 )
 
 const (
@@ -20,7 +20,7 @@ const (
 func StartRPC(ctx context.Context, port int) {
 	// init server and struct
 	srv := rpc.NewServer()
-	authRPC := &services.Auth{}
+	authRPC := &_authuc.Auth{}
 
 	// initial listener
 	listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))

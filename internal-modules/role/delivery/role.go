@@ -1,14 +1,15 @@
-package controllers
+package delivery
 
 import (
 	"fmt"
 
-	"github.com/gin-gonic/gin"
+	"github.com/yeqown/gRBAC-server/internal-modules/common"
+	"github.com/yeqown/gRBAC-server/pkg/logger"
 
+	"github.com/gin-gonic/gin"
 	auth "github.com/ne7ermore/gRBAC"
 	"github.com/ne7ermore/gRBAC/services"
-	"github.com/yeqown/gRBAC-server/logger"
-	"github.com/yeqown/server-common/code"
+	"github.com/yeqown/infrastructure/types/codes"
 )
 
 /*
@@ -19,7 +20,7 @@ type newRoleForm struct {
 }
 
 type newRoleResp struct {
-	code.CodeInfo
+	codes.Proto
 	Role *services.Role `json:"role"`
 }
 
@@ -31,21 +32,21 @@ func NewRole(c *gin.Context) {
 	)
 
 	if err := c.ShouldBind(form); err != nil {
-		ResponseError(c, err)
+		common.ResponseError(c, err)
 		return
 	}
 
 	role, err := auth.CreateRole(form.RoleName)
 	if err != nil {
-		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		codes.Fill(resp, codes.New(codes.CodeSystemErr, err.Error()))
 		logger.Logger.Error(err.Error())
-		Response(c, resp)
+		common.Response(c, resp)
 		return
 	}
 
-	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	codes.Fill(resp, codes.New(codes.CodeOK, ""))
 	resp.Role = role
-	Response(c, resp)
+	common.Response(c, resp)
 	return
 }
 
@@ -58,7 +59,7 @@ type queryAllRolesForm struct {
 }
 
 type queryAllRolesResp struct {
-	code.CodeInfo
+	codes.Proto
 	Roles []*services.Role `json:"roles"`
 }
 
@@ -70,23 +71,23 @@ func QueryRole(c *gin.Context) {
 	)
 
 	if err := c.ShouldBind(form); err != nil {
-		ResponseError(c, err)
+		common.ResponseError(c, err)
 		return
 	}
 
 	resp.Roles = nil
 
-	roles, err := auth.GetAllRoles(form.Skip, form.Limit, CreateTimeDesc)
+	roles, err := auth.GetAllRoles(form.Skip, form.Limit, common.CreateTimeDesc)
 	if err != nil {
-		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
-		Response(c, resp)
+		codes.Fill(resp, codes.New(codes.CodeSystemErr, err.Error()))
+		common.Response(c, resp)
 		return
 	}
 	fmt.Println(roles)
 
-	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	codes.Fill(resp, codes.New(codes.CodeOK, ""))
 	resp.Roles = roles
-	Response(c, resp)
+	common.Response(c, resp)
 	return
 }
 
@@ -99,7 +100,7 @@ type assignPerToRoleForm struct {
 }
 
 type assignPerToRoleResp struct {
-	code.CodeInfo
+	codes.Proto
 	Role *services.Role `json:"role"`
 }
 
@@ -111,22 +112,22 @@ func AssignRolePermission(c *gin.Context) {
 	)
 
 	if err := c.ShouldBind(form); err != nil {
-		ResponseError(c, err)
+		common.ResponseError(c, err)
 		return
 	}
 
 	role, err := auth.Assign(form.RoleID, form.PermissionID)
 
 	if err != nil {
-		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		codes.Fill(resp, codes.New(codes.CodeSystemErr, err.Error()))
 		logger.Logger.Error(err.Error())
-		Response(c, resp)
+		common.Response(c, resp)
 		return
 	}
 
-	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	codes.Fill(resp, codes.New(codes.CodeOK, ""))
 	resp.Role = role
-	Response(c, resp)
+	common.Response(c, resp)
 	return
 }
 
@@ -139,7 +140,7 @@ type delPerToRoleForm struct {
 }
 
 type delPerToRoleResp struct {
-	code.CodeInfo
+	codes.Proto
 	Role *services.Role `json:"role"`
 }
 
@@ -151,20 +152,20 @@ func DelRolePermission(c *gin.Context) {
 	)
 
 	if err := c.ShouldBind(form); err != nil {
-		ResponseError(c, err)
+		common.ResponseError(c, err)
 		return
 	}
 
 	role, err := auth.Revoke(form.RoleID, form.PermissionID)
 	if err != nil {
-		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		codes.Fill(resp, codes.New(codes.CodeSystemErr, err.Error()))
 		logger.Logger.Error(err.Error())
-		Response(c, resp)
+		common.Response(c, resp)
 		return
 	}
 
-	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	codes.Fill(resp, codes.New(codes.CodeOK, ""))
 	resp.Role = role
-	Response(c, resp)
+	common.Response(c, resp)
 	return
 }

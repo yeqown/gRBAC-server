@@ -1,11 +1,12 @@
-package controllers
+package delivery
 
 import (
 	"github.com/gin-gonic/gin"
 	auth "github.com/ne7ermore/gRBAC"
 	"github.com/ne7ermore/gRBAC/services"
-	"github.com/yeqown/gRBAC-server/logger"
-	"github.com/yeqown/server-common/code"
+	"github.com/yeqown/gRBAC-server/internal-modules/common"
+	"github.com/yeqown/gRBAC-server/pkg/logger"
+	"github.com/yeqown/infrastructure/types/codes"
 )
 
 /*
@@ -16,7 +17,7 @@ type newUserForm struct {
 }
 
 type newUserResp struct {
-	code.CodeInfo
+	codes.Proto
 	User *services.User `json:"user"`
 }
 
@@ -28,20 +29,20 @@ func NewUser(c *gin.Context) {
 	)
 
 	if err := c.ShouldBind(form); err != nil {
-		ResponseError(c, err)
+		common.ResponseError(c, err)
 		return
 	}
 
 	user, err := auth.CreateUser(form.Mobile)
 	if err != nil {
-		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		codes.Fill(resp, codes.New(codes.CodeSystemErr, err.Error()))
 		logger.Logger.Error(err.Error())
-		Response(c, resp)
+		common.Response(c, resp)
 		return
 	}
-	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	codes.Fill(resp, codes.New(codes.CodeOK, ""))
 	resp.User = user
-	Response(c, resp)
+	common.Response(c, resp)
 	return
 }
 
@@ -55,7 +56,7 @@ type queryAllUsersForm struct {
 }
 
 type queryAllUsersResp struct {
-	code.CodeInfo
+	codes.Proto
 	Users []*services.User `json:"users"`
 }
 
@@ -68,14 +69,14 @@ func QueryUser(c *gin.Context) {
 	)
 
 	if err := c.ShouldBind(form); err != nil {
-		ResponseError(c, err)
+		common.ResponseError(c, err)
 		return
 	}
 
-	mapUsers, err := auth.GetAllUsers(form.Skip, form.Limit, CreateTimeDesc)
+	mapUsers, err := auth.GetAllUsers(form.Skip, form.Limit, common.CreateTimeDesc)
 	if err != nil {
-		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
-		Response(c, resp)
+		codes.Fill(resp, codes.New(codes.CodeSystemErr, err.Error()))
+		common.Response(c, resp)
 		return
 	}
 	// us := make([]*services.User, 0, len(mapUsers))
@@ -86,9 +87,9 @@ func QueryUser(c *gin.Context) {
 	// 	println(val)
 	// }
 
-	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	codes.Fill(resp, codes.New(codes.CodeOK, ""))
 	resp.Users = mapUsers
-	Response(c, resp)
+	common.Response(c, resp)
 	return
 }
 
@@ -101,7 +102,7 @@ type assignPerToUserForm struct {
 }
 
 type assignPerToUserResp struct {
-	code.CodeInfo
+	codes.Proto
 	User *services.User `json:"user"`
 }
 
@@ -113,7 +114,7 @@ func AssignUserPermission(c *gin.Context) {
 	)
 
 	if err := c.ShouldBind(form); err != nil {
-		ResponseError(c, err)
+		common.ResponseError(c, err)
 		return
 	}
 
@@ -121,15 +122,15 @@ func AssignUserPermission(c *gin.Context) {
 
 	user, err := auth.AddRole(form.UserID, form.RoleID)
 	if err != nil {
-		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		codes.Fill(resp, codes.New(codes.CodeSystemErr, err.Error()))
 		logger.Logger.Error(err.Error())
-		Response(c, resp)
+		common.Response(c, resp)
 		return
 	}
 
-	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	codes.Fill(resp, codes.New(codes.CodeOK, ""))
 	resp.User = user
-	Response(c, resp)
+	common.Response(c, resp)
 	return
 }
 
@@ -142,7 +143,7 @@ type delPerToUserForm struct {
 }
 
 type delPerToUserResp struct {
-	code.CodeInfo
+	codes.Proto
 	User *services.User `json:"user"`
 }
 
@@ -154,20 +155,20 @@ func DelUserPermission(c *gin.Context) {
 	)
 
 	if err := c.ShouldBind(form); err != nil {
-		ResponseError(c, err)
+		common.ResponseError(c, err)
 		return
 	}
 
 	user, err := auth.DelRole(form.UserID, form.RoleID)
 	if err != nil {
-		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		codes.Fill(resp, codes.New(codes.CodeSystemErr, err.Error()))
 		logger.Logger.Error(err.Error())
-		Response(c, resp)
+		common.Response(c, resp)
 		return
 	}
 
-	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	codes.Fill(resp, codes.New(codes.CodeOK, ""))
 	resp.User = user
-	Response(c, resp)
+	common.Response(c, resp)
 	return
 }

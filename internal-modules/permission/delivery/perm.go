@@ -1,11 +1,13 @@
-package controllers
+package delivery
 
 import (
+	"github.com/yeqown/gRBAC-server/internal-modules/common"
+	"github.com/yeqown/gRBAC-server/pkg/logger"
+
 	"github.com/gin-gonic/gin"
 	auth "github.com/ne7ermore/gRBAC"
 	"github.com/ne7ermore/gRBAC/services"
-	"github.com/yeqown/gRBAC-server/logger"
-	"github.com/yeqown/server-common/code"
+	"github.com/yeqown/infrastructure/types/codes"
 )
 
 /*
@@ -17,7 +19,7 @@ type newPermissionForm struct {
 }
 
 type newPermissionResp struct {
-	code.CodeInfo
+	codes.Proto
 	Permission *services.Permission `json:"Permission"`
 }
 
@@ -29,21 +31,21 @@ func NewPermission(c *gin.Context) {
 	)
 
 	if err := c.ShouldBind(form); err != nil {
-		ResponseError(c, err)
+		common.ResponseError(c, err)
 		return
 	}
 
 	permission, err := auth.CreatePermisson(form.Name, form.Desc)
 	if err != nil {
-		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		codes.Fill(resp, codes.New(codes.CodeSystemErr, err.Error()))
 		logger.Logger.Error(err.Error())
-		Response(c, resp)
+		common.Response(c, resp)
 		return
 	}
 
-	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	codes.Fill(resp, codes.New(codes.CodeOK, ""))
 	resp.Permission = permission
-	Response(c, resp)
+	common.Response(c, resp)
 	return
 }
 
@@ -57,7 +59,7 @@ type queryPermissionForm struct {
 }
 
 type queryPermissionResp struct {
-	code.CodeInfo
+	codes.Proto
 	Permissions []*services.Permission `json:"permissions"`
 }
 
@@ -70,14 +72,14 @@ func QueryPermission(c *gin.Context) {
 	)
 
 	if err := c.ShouldBind(form); err != nil {
-		ResponseError(c, err)
+		common.ResponseError(c, err)
 		return
 	}
 
-	mapPerms, err := auth.GetAllPerms(form.Skip, form.Limit, CreateTimeDesc)
+	mapPerms, err := auth.GetAllPerms(form.Skip, form.Limit, common.CreateTimeDesc)
 	if err != nil {
-		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
-		Response(c, resp)
+		codes.Fill(resp, codes.New(codes.CodeSystemErr, err.Error()))
+		common.Response(c, resp)
 		return
 	}
 
@@ -87,9 +89,9 @@ func QueryPermission(c *gin.Context) {
 	// 	// logger.Logger.Info(perm.(*services.Permission))
 	// }
 
-	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	codes.Fill(resp, codes.New(codes.CodeOK, ""))
 	resp.Permissions = mapPerms
-	Response(c, resp)
+	common.Response(c, resp)
 	return
 }
 
@@ -104,7 +106,7 @@ type editPermissionForm struct {
 }
 
 type editPermissionResp struct {
-	code.CodeInfo
+	codes.Proto
 	Permission *services.Permission `json:"permission"`
 }
 
@@ -116,20 +118,20 @@ func EditPermission(c *gin.Context) {
 	)
 
 	if err := c.ShouldBind(form); err != nil {
-		ResponseError(c, err)
+		common.ResponseError(c, err)
 		return
 	}
 
 	permission, err := auth.UpdatePerm(form.PermissionID, form.Desc, form.Name)
 	if err != nil {
-		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		codes.Fill(resp, codes.New(codes.CodeSystemErr, err.Error()))
 		logger.Logger.Error(err.Error())
-		Response(c, resp)
+		common.Response(c, resp)
 		return
 	}
 
-	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	codes.Fill(resp, codes.New(codes.CodeOK, ""))
 	resp.Permission = permission
-	Response(c, resp)
+	common.Response(c, resp)
 	return
 }

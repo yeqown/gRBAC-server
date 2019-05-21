@@ -1,11 +1,11 @@
-package middleware
+package mw
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yeqown/gRBAC-server/services"
-	"github.com/yeqown/server-common/code"
+	"github.com/yeqown/gRBAC-server/pkg/secret"
+	"github.com/yeqown/infrastructure/types/codes"
 )
 
 // Token middleware need each request has
@@ -20,8 +20,8 @@ func Token() gin.HandlerFunc {
 		}
 
 		// empty
-		if token != services.GetSecret() {
-			c.JSON(http.StatusOK, code.NewCodeInfo(code.CodeSystemErr, "Token invalid"))
+		if token != secret.GetSecret() {
+			c.JSON(http.StatusOK, codes.New(codes.CodeSystemErr, "Token invalid"))
 			c.Abort()
 			return
 		}

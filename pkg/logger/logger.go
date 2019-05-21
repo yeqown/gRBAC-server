@@ -1,7 +1,7 @@
 package logger
 
 import (
-	log "github.com/yeqown/server-common/logger"
+	log "github.com/yeqown/infrastructure/framework/logrus-logger"
 )
 
 var (

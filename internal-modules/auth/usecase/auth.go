@@ -1,11 +1,11 @@
-package services
+package usecase
 
 import (
 	"fmt"
 
 	auth "github.com/ne7ermore/gRBAC"
-	"github.com/yeqown/gRBAC-server/logger"
-	"github.com/yeqown/server-common/code"
+	"github.com/yeqown/gRBAC-server/pkg/logger"
+	"github.com/yeqown/infrastructure/types/codes"
 )
 
 // Auth for rpc calling
@@ -30,17 +30,17 @@ func (a Auth) IsPermitted(args *Args, reply *bool) error {
 
 	// permID from res_desc and action
 	ci, permID := getPermID(args.ResDesc, args.Action)
-	if ci.Code != code.CodeOk {
-		logger.Logger.Errorf("get perm id err: %s\n", ci.Message)
-		return fmt.Errorf("could not get permission id, %v", ci.Message)
+	if ci.ErrCode != codes.CodeOK {
+		logger.Logger.Errorf("get perm id err: %s\n", ci.ErrMessage)
+		return fmt.Errorf("could not get permission id, %v", ci.ErrMessage)
 	}
 
 	ci, userID := getUserID(args.UID)
-	if ci.Code != code.CodeOk {
-		logger.Logger.Errorf("get user id err: %s\n", ci.Message)
+	if ci.ErrCode != codes.CodeOK {
+		logger.Logger.Errorf("get user id err: %s\n", ci.ErrMessage)
 		r, err := auth.GetRoleByName("default")
 		if err != nil {
-			logger.Logger.Errorf("get role id err: %s\n", ci.Message)
+			logger.Logger.Errorf("get role id err: %s\n", ci.ErrMessage)
 			return err
 		}
 
@@ -65,21 +65,21 @@ func (a Auth) IsPermitted(args *Args, reply *bool) error {
 }
 
 // get user id by param
-func getUserID(uid string) (*code.CodeInfo, string) {
+func getUserID(uid string) (*codes.Proto, string) {
 	u, err := auth.GetUserByUid(uid)
 	if err != nil {
-		return code.NewCodeInfo(code.CodeSystemErr, err.Error()), ""
+		return codes.New(codes.CodeSystemErr, err.Error()), ""
 	}
-	return code.NewCodeInfo(code.CodeOk, ""), u.Id.Hex()
+	return codes.New(codes.CodeOK, ""), u.Id.Hex()
 }
 
 // 有可能权限未找到～
-func getPermID(resDesc, action string) (*code.CodeInfo, string) {
+func getPermID(resDesc, action string) (*codes.Proto, string) {
 	perm, err := auth.GetPermByDesc(
 		fmt.Sprintf("%s:%s:*", resDesc, action),
 	)
 	if err != nil {
-		return code.NewCodeInfo(code.CodeSystemErr, err.Error()), ""
+		return codes.New(codes.CodeSystemErr, err.Error()), ""
 	}
-	return code.NewCodeInfo(code.CodeOk, ""), perm.Id.Hex()
+	return codes.New(codes.CodeOK, ""), perm.Id.Hex()
 }

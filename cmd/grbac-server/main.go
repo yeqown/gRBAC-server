@@ -5,8 +5,8 @@ import (
 	"flag"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yeqown/gRBAC-server/logger"
-	"github.com/yeqown/gRBAC-server/services"
+	"github.com/yeqown/gRBAC-server/pkg/logger"
+	"github.com/yeqown/gRBAC-server/pkg/secret"
 )
 
 var (
@@ -26,7 +26,7 @@ func main() {
 	logger.InitLogger(*logpath)
 
 	// init secret file and token
-	services.InitSecretFile()
+	secret.InitSecretFile()
 
 	// set gin release mode
 	gin.SetMode(gin.ReleaseMode)

@@ -1,4 +1,4 @@
-package controllers
+package delivery
 
 import (
 	"fmt"
@@ -6,9 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 	auth "github.com/ne7ermore/gRBAC"
 
-	"github.com/yeqown/gRBAC-server/logger"
-	"github.com/yeqown/gRBAC-server/services"
-	"github.com/yeqown/server-common/code"
+	"github.com/yeqown/gRBAC-server/internal-modules/common"
+	"github.com/yeqown/gRBAC-server/pkg/logger"
+	"github.com/yeqown/gRBAC-server/pkg/secret"
+	"github.com/yeqown/infrastructure/types/codes"
 )
 
 /*
@@ -21,7 +22,7 @@ type isPermittedForm struct {
 }
 
 type isPermittedResp struct {
-	code.CodeInfo
+	codes.Proto
 	Permitted bool `json:"permitted"`
 }
 
@@ -34,16 +35,16 @@ func Auth(c *gin.Context) {
 
 	resp.Permitted = false
 	if err := c.ShouldBind(form); err != nil {
-		ResponseError(c, err)
+		common.ResponseError(c, err)
 		return
 	}
 
 	// get user by UserID
 	u, err := auth.GetUserByUid(form.UID)
 	if err != nil {
-		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		codes.Fill(resp, codes.New(codes.CodeSystemErr, err.Error()))
 		logger.Logger.Errorf("get user with err: %s\n", err.Error())
-		Response(c, resp)
+		common.Response(c, resp)
 		return
 	}
 	logger.Logger.Infof("get user with mongoid: %s\n", u.Id.Hex())
@@ -53,24 +54,24 @@ func Auth(c *gin.Context) {
 		fmt.Sprintf("%s:%s:%s", form.ResName, form.Action, "*"),
 	)
 	if err != nil {
-		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		codes.Fill(resp, codes.New(codes.CodeSystemErr, err.Error()))
 		logger.Logger.Errorf("get perm with err: %s\n", err.Error())
-		Response(c, resp)
+		common.Response(c, resp)
 		return
 	}
 	logger.Logger.Infof("get permission with mongoid: %s\n", p.Id.Hex())
 
 	permitted, err := auth.IsPrmitted(u.Id.Hex(), p.Id.Hex())
 	if err != nil {
-		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, err.Error()))
+		codes.Fill(resp, codes.New(codes.CodeSystemErr, err.Error()))
 		logger.Logger.Errorf(err.Error())
-		Response(c, resp)
+		common.Response(c, resp)
 		return
 	}
 
-	code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeOk, ""))
+	codes.Fill(resp, codes.New(codes.CodeOK, ""))
 	resp.Permitted = permitted
-	Response(c, resp)
+	common.Response(c, resp)
 	return
 }
 
@@ -78,7 +79,7 @@ type verifyForm struct {
 	Secret string `form:"secret" binding:"required"`
 }
 type verifyResp struct {
-	code.CodeInfo
+	codes.Proto
 	Verified bool   `json:"verified"`
 	Token    string `json:"token,omitempty"`
 }
@@ -91,21 +92,21 @@ func Verify(c *gin.Context) {
 	)
 	// resp.Verified = false
 	if err := c.ShouldBind(form); err != nil {
-		ResponseError(c, err)
+		common.ResponseError(c, err)
 		return
 	}
 
-	logger.Logger.Infof("get %s, want %s", form.Secret, services.GetSecret())
+	logger.Logger.Infof("get %s, want %s", form.Secret, secret.GetSecret())
 
-	if form.Secret != services.GetSecret() {
-		code.FillCodeInfo(resp, code.NewCodeInfo(code.CodeSystemErr, "wrong token input"))
-		Response(c, resp)
+	if form.Secret != secret.GetSecret() {
+		codes.Fill(resp, codes.New(codes.CodeSystemErr, "wrong token input"))
+		common.Response(c, resp)
 		return
 	}
 
 	resp.Verified = true
-	resp.Token = services.GetSecret()
-	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
-	Response(c, resp)
+	resp.Token = secret.GetSecret()
+	codes.Fill(resp, codes.Get(codes.CodeOK))
+	common.Response(c, resp)
 	return
 }

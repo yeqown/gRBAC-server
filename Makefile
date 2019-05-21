@@ -4,8 +4,8 @@ GOTEST=$(GOCMD) test
 GOBUILD=$(GOCMD) build
 
 # Params define
-MAIN_PATH=.
-PACKAGE_PATH=pkg
+MAIN_PATH=cmd/grbac-server
+PACKAGE_PATH=package
 PACKAGE_BIN_PATH=bin
 BIN=grbac-server
 
@@ -16,9 +16,8 @@ test:
 
 build: 
 	# building
-	mkdir $(PACKAGE_PATH)
-	mkdir $(PACKAGE_PATH)/$(PACKAGE_BIN_PATH)
-	cd $(MAIN_PATH) && CGO_ENABLE=false GOOS=darwin GOARCH=amd64 $(GOBUILD) -o $(BIN) 
+	- mkdir -p $(PACKAGE_PATH)/$(PACKAGE_BIN_PATH)
+	cd $(MAIN_PATH) && CGO_ENABLE=false GOOS=linux GOARCH=386 $(GOBUILD) -o $(BIN) 
 	mv "$(MAIN_PATH)/$(BIN)" $(PACKAGE_PATH)/$(PACKAGE_BIN_PATH)
 
 # pack:

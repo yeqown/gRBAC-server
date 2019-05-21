@@ -5,8 +5,8 @@ import (
 	"net/rpc/jsonrpc"
 	"testing"
 
-	"github.com/yeqown/gRBAC-server/logger"
-	"github.com/yeqown/gRBAC-server/services"
+	_authuc "github.com/yeqown/gRBAC-server/internal-modules/auth/usecase"
+	"github.com/yeqown/gRBAC-server/pkg/logger"
 )
 
 func Test_StartRPC(t *testing.T) {
@@ -24,7 +24,7 @@ func Test_StartRPC(t *testing.T) {
 		return
 	}
 	var (
-		args = &services.Args{
+		args = &_authuc.Args{
 			UID:     "18302889215",
 			ResDesc: "admin",
 			Action:  "login",
